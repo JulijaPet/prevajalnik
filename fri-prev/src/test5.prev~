@@ -1,0 +1,47 @@
+void main(string[] args) {
+	string filename = args[a]
+	string input
+
+	input = readFile(new File(filename))
+	System.out.println(input)
+	input = "    START 42\n    END zacetek"
+
+	Parser parser = new Parser()
+	Code code
+	try {
+		code = parser.parse(input)
+		code.begin()
+		code.print()
+		code.setEnd(code.getLocCtr())
+		code.end()
+	} catch (SyntaxError e) {
+		System.err.println(e)
+		System.exit(1)
+		return
+	} catch (SemanticError e) {
+		System.err.println(e)
+		System.exit(1)
+		return
+	}
+		
+	code.begin()
+	try{
+		code.resolve()
+	} catch (SemanticError e) {
+		System.err.println(e)
+		System.exit(1)
+		return
+	}
+	code.end()
+		
+	RandomAccessFile obj = null
+	RandomAccessFile lst = null
+	string noSufix = filename.substring(0, filename.indexOf('.'))
+	try {
+		obj = new RandomAccessFile(noSufix + "2.obj", "rw")
+		lst = new RandomAccessFile(noSufix + "2.lst", "rw")
+	} catch (FileNotFoundException e) {
+		System.err.println("Datoteki ne moreta biti ustvarjeni.")
+	}
+
+}

@@ -1,0 +1,6 @@
+for d = 0 to log2(n)-1 do
+	for all k = 0 to n-1 by 2^(d+1) in parallel do
+		x[k + 2ˇ(d+1) - 1] = x[k + 2^d -1] + x[k + 2^(d+1) - 1]
+	end
+end
+

@@ -1,0 +1,83 @@
+# This program generates a pattern, sized according to arguments passed to function "pattern(y,x,h,w)".
+#
+# y decides the number of patterns in vertical direction
+# x decides the number of patterns in horizontal direction
+# h decides the height of a single pattern
+# w decides the width  of a single pattern
+
+(pattern(4,6,5,9))
+where
+	fun pattern(y:integer, x:integer, h:integer, w:integer):void = (
+		for a=1,y: (
+			for c=1,h: (
+				if (h % 2 == 1) then (
+					if (c == h / 2 + 1) then (
+						midH = true
+					) else (
+						midH = false
+					) end
+				) else (
+					midH = false
+				) end,
+				
+				for b=1,x: (
+					for d=1,w: (
+						if (w % 2 == 1) then (							
+							if (d == w / 2 + 1) then (
+								midW = true
+							) else (
+								midW = false
+							) end
+						) else (
+							midW = false
+						) end,
+						
+						if (midH) then (
+							if (midW) then (
+								printChr(' ')
+							) else (
+								if (d <= w / 2 + 1) then (
+									printChr('(')
+								) else (
+									printChr(')')
+								) end
+							) end
+						) else (
+							if (midW) then (
+								if (c < h / 2 + 1) then (
+									printChr('^')
+								) else (
+									printChr('v')
+								) end
+							) else (
+								if (c < h / 2 + 1) then (
+									if (d <= w / 2 + 1) then (
+										printChr('/')
+									) else (
+										printChr('\\')
+									) end
+								) else (
+									if (d <= w / 2 + 1) then (
+										printChr('\\')
+									) else (
+										printChr('/')
+									) end
+								) end
+							) end
+						) end
+					) end
+				) end,
+				printChr('\n')
+			) end
+		) end
+	) where
+		var a:integer
+		var b:integer
+		var c:integer
+		var d:integer
+		var midH:boolean
+		var midW:boolean
+	end
+	
+	fun printChr(c:char):void
+end

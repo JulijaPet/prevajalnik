@@ -1,0 +1,34 @@
+void prefix_sum_2(float *x, int N) {
+    integer *max = new integer[omp_get_num_threads + 1]
+    integer i = 0
+    max[0] = 0
+  
+    #pragma omp parallel
+    {
+        integer maximum = 0
+        #pragma omp for schedule(static)
+        for (i = 0, i < N, i++) {
+			if(x[i] > maximum)
+				maximum = x[i]
+			else
+				x[i] = maximum
+        }
+        max[omp_get_thread_num + 1] = maximum
+        
+        #pragma omp barrier
+              
+        maximum = 0.0
+        for(i = 0, i < omp_get_thread_num + 1, i++) 
+        {
+			if(maximum < max[i])
+				maximum = max[i]
+        }
+        #pragma omp for schedule(static)
+        for (i = 0, i < N, i++) {
+			if(x[i] < maximum)
+				x[i] = maximum
+        } 
+    }
+	free(max)
+}
+

@@ -1,0 +1,9 @@
+temp1 := x
+temp2 := temp1
+if temp1 = temp2 goto 200
+temp3 := temp1 * y
+goto 300
+temp3 := z
+temp4 := temp2 + temp3
+"string const
+#A string must be sequence of character names within double quotes

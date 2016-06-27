@@ -1,0 +1,35 @@
+(banner="Hello, world.\n",putstr(banner),0)
+where
+  typ int:integer
+  var x : rec{x:int, y:int}
+  fun putstr(s:string):void
+  fun f1(i:integer):integer=f1(i)+f2(i,'a',"A")
+    where
+      var c:char
+      var r:rec { x:integer, y:integer, c:char }
+      fun f2(j:integer,c:char,s:string):integer=i+j
+        where
+      	  var k:integer
+      	  var a:arr[10]integer
+          fun f6():integer=1 + 2
+        end
+    end
+  var banner:string
+  fun f3(i:integer, j:boolean):integer = 
+  x
+  where
+    var x:integer
+    fun f4(c:char, x:ptr rec{x:int, y:int}, tt:string):integer = f1(2) + l
+    where
+      var l:integer
+      fun f5(c:char):char=c
+    end
+    fun f6(c:char, x:ptr rec{x:int, y:int}, tt:string, rtre: ptr rec{f:rec{t:int}}):integer = f5('a') + f3(3, false) + f1(rtre^.f.t)
+    where
+      var l:integer
+      fun f5(c:char):integer=f5('a')
+      var n:boolean
+    end
+  end
+end
+

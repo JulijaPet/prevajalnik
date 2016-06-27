@@ -1,0 +1,4 @@
+printStr("haaaaaaloooo")
+where	
+	fun printStr(s:string):void
+end

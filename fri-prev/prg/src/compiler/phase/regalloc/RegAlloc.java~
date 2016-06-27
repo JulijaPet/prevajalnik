@@ -1,0 +1,468 @@
+package compiler.phase.codegen;
+
+import java.util.LinkedList;
+import java.util.Vector;
+
+import compiler.*;
+import compiler.common.report.InternalCompilerError;
+import compiler.data.frg.CodeFragment;
+import compiler.data.frg.Fragment;
+import compiler.data.imc.*;
+import compiler.data.imc.BINOP.Oper;
+import compiler.data.imc.MOVE;
+import compiler.data.inst.*;
+import compiler.phase.*;
+
+/**
+ * 
+ * @author juliette
+ */
+public class CodeGen extends Phase {
+
+	  
+	public CodeGen(Task task) {
+		super(task, "codegen");
+	  
+		this.task = task;  
+	  
+		start();
+	 }
+	 
+	@Override
+	public void close() {
+		super.close();
+	}
+
+	private boolean fp;
+	LinkedList<String> list;
+	Vector<Operator> temp;
+	private void start()
+	{
+		for (Fragment fragment : task.fragments.values()) 
+		{
+			if (fragment instanceof CodeFragment) 
+			{
+				list = new LinkedList<String>();
+				temp = new Vector<Operator>();
+				fp = true;
+				System.out.println("++++++++++ C O D E  F R A G M E N T ++++++++++");
+				Operator oper = new Operator(((CodeFragment)fragment).label);
+				oper.izpis0();
+				
+				execute((CodeFragment)fragment);
+				System.out.println("++++++++++++++++ T H E  E N D ++++++++++++++++");
+				System.out.println();
+				System.out.println("++++++++++++++++++ G R A P H +++++++++++++++++");
+
+				DirectedGraph<String> graph = new DirectedGraph<String>();
+				LinkedList<Integer> begin = new LinkedList<Integer>();
+				LinkedList<Integer> end = new LinkedList<Integer>();
+				for(int i = 0; i < list.size(); i++)
+				{		 
+					boolean zacetek = false;
+					int counter = 0;
+					int s = 0;
+					int e = 0;
+					for(int j = 0; j < temp.size(); j++)
+					{		 
+						Operator o = temp.get(j);
+						if(o.a != null && o.a.equals(list.get(i)))
+						{
+							if(!zacetek)
+							{
+								s = counter;
+								zacetek = true;
+							}
+							else
+								e = counter;
+						}
+						if(o.b != null && o.b.equals(list.get(i)))
+						{
+							if(!zacetek)
+							{
+								s = counter;
+								zacetek = true;
+							}
+							else
+								e = counter;
+						}
+						if(o.c != null && o.c.equals(list.get(i)))
+						{
+							if(!zacetek)
+							{
+								s = counter;
+								zacetek = true;
+							}
+							else
+								e = counter;
+						}
+						counter++;
+					}
+					begin.add(s);
+					end.add(e);
+				}
+
+				for(int i = 0; i < list.size(); i++)
+				{
+					System.out.print(list.get(i) + ":  ");
+					for(int j = 0; j < list.size(); j++){
+						if(i != j){
+							if( (begin.get(j) < end.get(i) && begin.get(j) >= begin.get(i)) || (begin.get(i) < end.get(j) && begin.get(i) >= begin.get(j)) )
+								System.out.print(list.get(j) + " ");
+						}
+					}
+					System.out.println();
+				}
+				
+				System.out.println(graph.toString());
+				
+				System.out.println("++++++++++++++++ T H E  E N D ++++++++++++++++");
+				System.out.println();
+			}
+		}  
+	}
+	
+	private void execute(CodeFragment codeFrg) {
+		if (codeFrg == null)
+			return;  
+		execute(codeFrg.linCode.stmts()); 
+	}
+
+	private void execute(Vector<IMCStmt> stmts) {
+		int pc = 0;
+		while (true) {
+			if (pc >= stmts.size())
+				return;
+			IMCStmt stmt = stmts.get(pc);
+			
+			if (stmt instanceof LABEL)
+			{
+				Operator label = new Operator(((LABEL) stmt).label + ":");
+				label.izpis0();
+				pc++;
+				continue;
+			}
+			if (stmt instanceof CJUMP) {
+				
+				String a = execute(((CJUMP) stmt).cond);
+				
+				String b = ((CJUMP) stmt).posLabel;
+				Operator pos = new Operator("BNZ %s, %s", a, b);
+				pos.izpis2();
+				temp.add(pos);
+				
+				String c = ((CJUMP) stmt).negLabel;
+				Operator neg = new Operator("BZ %s", c);
+				neg.izpis1();
+				temp.add(neg);
+				
+				pc++;
+				continue;
+			}
+			if (stmt instanceof MOVE) {
+				String a = "";
+				String b = "";
+				if (((MOVE) stmt).dst instanceof TEMP) {
+					b = execute(((MOVE) stmt).src);
+					a = "T" + ((TEMP) (((MOVE) stmt).dst)).name;
+					Operator oper = new Operator("ADD %s, %s, 0", a, b);
+					oper.izpis2();
+					temp.add(oper);
+				}
+				if (((MOVE) stmt).dst instanceof MEM) {
+					a = execute(((MEM) (((MOVE) stmt).dst)).addr);
+					b = execute(((MOVE) stmt).src);
+					Operator oper = new Operator("STO %s, %s, 0", a, b);
+					oper.izpis2();
+					temp.add(oper);
+					fp = true;
+				}
+				pc++;
+				continue;
+		  	}
+
+			if (stmt instanceof JUMP) {
+
+				String dest = ((JUMP) stmt).label;
+				
+				Operator oper = new Operator("JMP %s", dest);
+				oper.izpis1();
+				temp.add(oper);
+				
+				pc++;
+				continue;
+			}
+			pc++;
+		}
+	}
+	  
+	private String execute(IMCExpr expr) {
+		
+		if (expr instanceof CONST) {
+			TEMP tmp = new TEMP(TEMP.newTempName());
+			String r = "T" + tmp.name;
+			String a = ""+((CONST) expr).value;
+			Operator oper = new Operator("SETL %s, %s", r, a);
+			oper.izpis2();
+			temp.add(oper);
+
+			list.add(r);
+			return r;
+		}  
+
+		else if (expr instanceof BINOP) {
+			String a = execute(((BINOP) expr).expr1);
+			String b = execute(((BINOP) expr).expr2);  
+			
+			TEMP tmp = new TEMP(TEMP.newTempName());
+			String r = "T" + tmp.name;
+			
+			list.add(r);
+
+			TEMP t = new TEMP(TEMP.newTempName());
+			String rez = "T" + t.name;
+			
+			Operator oper;
+			switch (((BINOP) expr).oper) {
+			case OR:
+				oper = new Operator("OR %s, %s, %s", r, a, b);
+				oper.izpis3();
+				temp.add(oper);
+				return r;
+			case AND:
+				oper = new Operator("AND %s, %s, %s", r, a, b);
+				oper.izpis3();
+				temp.add(oper);
+				return r;
+			case EQU:
+				oper = new Operator("CMP %s, %s, %s", r, a, b);
+				oper.izpis3();
+				temp.add(oper);
+				
+				t = new TEMP(TEMP.newTempName());
+				rez = "T" + t.name;
+				oper = new Operator("ZSZ %s, %s, 1", rez, r);
+				oper.izpis2();
+				temp.add(oper);
+				
+				list.add(rez);
+				return rez;
+			case NEQ:
+				oper = new Operator("CMP %s, %s, %s", r, a, b);
+				oper.izpis3();
+				temp.add(oper);
+				
+				t = new TEMP(TEMP.newTempName());
+				rez = "T" + t.name;
+				oper = new Operator("ZSNZ %s, %s, 1", rez, r);
+				oper.izpis2();
+				temp.add(oper);
+				
+				list.add(rez);
+				return rez;
+			case LTH:
+				oper = new Operator("CMP %s, %s, %s", r, a, b);
+				oper.izpis3();
+				temp.add(oper);
+				
+				oper = new Operator("ADD %s, %s, 1", r, r); 
+				oper.izpis2();
+				temp.add(oper);
+				
+				t = new TEMP(TEMP.newTempName());
+				rez = "T" + t.name;
+				oper = new Operator("ZSZ %s, %s, 1", rez, r);
+				oper.izpis2();
+				temp.add(oper);
+				
+				list.add(rez);
+				return rez;
+			case GTH:
+				oper = new Operator("CMP %s, %s, %s", r, a, b); 
+				oper.izpis2();
+				temp.add(oper);
+				
+				t = new TEMP(TEMP.newTempName());
+				rez = "T" + t.name;
+				oper = new Operator("AND %s, %s, 1", rez, r);
+				oper.izpis2();
+				temp.add(oper);
+
+				list.add(rez);
+				return rez;
+				
+			case LEQ:
+				oper = new Operator("CMP %s, %s, %s", r, a, b);
+				oper.izpis3();
+				temp.add(oper);
+				
+				t = new TEMP(TEMP.newTempName());
+				rez = "T" + t.name;
+				oper = new Operator("ZSNP %s, %s, 1", rez, r);
+				oper.izpis2();
+				temp.add(oper);
+
+				list.add(rez);
+				return rez;
+			case GEQ:
+				oper = new Operator("CMP %s, %s, %s", r, a, b);
+				oper.izpis3();
+				temp.add(oper);
+				
+				t = new TEMP(TEMP.newTempName());
+				rez = "T" + t.name;
+				oper = new Operator("ZSNN %s, %s, 1", rez, r);
+				oper.izpis2();
+				temp.add(oper);
+
+				list.add(rez);
+				return rez;
+			case ADD:
+				oper = new Operator("ADD %s, %s, %s", r, a, b);
+				oper.izpis3();
+				temp.add(oper);
+				return r;
+			case SUB:
+				oper = new Operator("SUB %s, %s, %s", r, a, b);
+				oper.izpis3();
+				temp.add(oper);
+				return r;
+			case MUL:
+				oper = new Operator("MUL %s, %s, %s", r, a, b);
+				oper.izpis3();
+				temp.add(oper);
+				return r;
+			case DIV:
+				oper = new Operator("DIV %s, %s, %s", r, a, b);
+				oper.izpis3();
+				temp.add(oper);
+				return r;
+			case MOD:
+				oper = new Operator("DIV %s, %s, %s", r, a, b);
+				oper.izpis3();
+				temp.add(oper);
+				
+				t = new TEMP(TEMP.newTempName());
+				rez = "T" + t.name;
+				oper = new Operator("MUL %s, %s, %s", rez, r, b);
+				oper.izpis3();
+				temp.add(oper);
+				
+				list.add(rez);
+				
+				TEMP t2 = new TEMP(TEMP.newTempName());
+				String rezultat = "T" + t2.name;
+				oper = new Operator("SUB %s, %s, %s", rezultat, a, rez);
+				oper.izpis3();
+				temp.add(oper);
+
+				list.add(rezultat);
+				return rezultat;
+			default:
+				return "";
+			}
+		}
+
+		else if (expr instanceof CALL) {
+			
+			CALL call = (CALL) expr;  
+			
+			long d = 0;
+			for (int arg = 0; arg < call.numArgs(); arg++) {
+				String value = execute(call.args(arg));
+				Operator oper = new Operator("STO %s, %s, %s", value, "SP", "" + d);
+				oper.izpis3();
+				temp.add(oper);
+				d += 8;//call.widths(arg);
+			}	
+			
+			Operator oper = new Operator("PUSHJ %s, %s", call.label);
+			oper.izpis1();
+			temp.add(oper);
+			
+			TEMP tmp = new TEMP(TEMP.newTempName());
+			String r = "T" + tmp.name;
+			oper = new Operator("LDO %s, %s, 0", r, "SP");
+			oper.izpis2();
+			temp.add(oper);
+			return r;
+		}
+
+		else if (expr instanceof MEM) {
+			String a = execute(((MEM) expr).addr);
+			TEMP tmp = new TEMP(TEMP.newTempName());
+			String r = "T" + tmp.name;
+			Operator oper = new Operator("LDO %s, %s, 0", r, a);
+			oper.izpis2();
+			temp.add(oper);
+			return r;
+		}
+
+		else if (expr instanceof NAME) {
+			TEMP tmp = new TEMP(TEMP.newTempName());
+			String r = "T" + tmp.name;
+			
+			list.add(r);
+			String a = ((NAME) expr).name;
+			Operator oper = new Operator("LDA %s, %s", r, a);
+			oper.izpis2();
+			temp.add(oper);
+			return r;
+		}
+
+		else if (expr instanceof NOP) {
+			TEMP tmp = new TEMP(TEMP.newTempName());
+			String r = "T" + tmp.name;
+			
+			Operator oper = new Operator("SET %s, 0", r);
+			oper.izpis1();
+			temp.add(oper);
+			//System.out.println("SWYM"); //TODO
+			return r;
+		}
+
+		else if (expr instanceof TEMP) {
+			if(fp)
+			{
+				fp = false;
+				return "FP";
+			}
+				
+			String r = "T" + ((TEMP) expr).name;
+			if(!list.contains(r))
+				list.add(r);
+			return r;
+		}
+
+		else if (expr instanceof UNOP) {
+			String a = execute(((UNOP) expr).expr);
+
+			TEMP tmp = new TEMP(TEMP.newTempName());
+			String r = "T" + tmp.name;
+			list.add(r);
+			
+			Operator oper;
+			switch (((UNOP) expr).oper) {
+			case ADD:
+				oper = new Operator("ADD %s, %s, 0", r, a);
+				temp.add(oper);
+				oper.izpis2();
+				return r;
+			case SUB:
+				oper = new Operator("SUB %s, 0, %s", r, a);
+				temp.add(oper);
+				oper.izpis2();
+				return r;
+			case NOT:
+				oper = new Operator("XOR %s, %s, 1", r, a); 
+				temp.add(oper);
+				oper.izpis2();
+				return r;
+			default:
+				return "";
+			}
+			
+		}
+		throw new InternalCompilerError();
+	}
+}
