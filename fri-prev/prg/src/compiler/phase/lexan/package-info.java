@@ -18,6 +18,6 @@
  * the symbol is returned.
  * </p>
  * 
- * @author sliva
+ * @author juliette
  */
 package compiler.phase.lexan;

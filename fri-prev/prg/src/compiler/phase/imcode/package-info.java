@@ -1,6 +1,6 @@
 /**
  * Intermediate code generation.
  * 
- * @author sliva
+ * @author juliette
  */
 package compiler.phase.imcode;

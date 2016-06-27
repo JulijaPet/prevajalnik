@@ -1,6 +1,6 @@
 /**
  * Evaluation of stack frames and variable accesses.
  * 
- * @author sliva
+ * @author juliette
  */
 package compiler.phase.frames;

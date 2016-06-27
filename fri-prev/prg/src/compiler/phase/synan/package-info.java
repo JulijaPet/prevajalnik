@@ -52,6 +52,6 @@ private void parseParameter() {
  * of the sentential forms.
  * </p>
  * 
- * @author sliva
+ * @author juliette
  */
 package compiler.phase.synan;

@@ -4,7 +4,7 @@ import compiler.*;
 import compiler.common.logger.*;
 
 /**
- * @author sliva
+ * @author juliette
  */
 public abstract class Phase implements AutoCloseable {
 

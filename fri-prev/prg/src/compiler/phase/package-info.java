@@ -1,4 +1,4 @@
 /**
- * @author sliva
+ * @author juliette
  */
 package compiler.phase;

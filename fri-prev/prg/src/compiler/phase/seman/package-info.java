@@ -19,6 +19,6 @@
  * assignment.</li>
  * </ul>
  * 
- * @author sliva
+ * @author juliette
  */
 package compiler.phase.seman;

@@ -36,6 +36,6 @@ private ParDecl parseParameter() {
  * }
  * </pre>
  * 
- * @author sliva
+ * @author juliette
  */
 package compiler.phase.abstr;

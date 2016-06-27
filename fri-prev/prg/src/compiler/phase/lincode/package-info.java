@@ -1,6 +1,6 @@
 /**
  * Linearization of the intermediate code (and the interpreter).
  * 
- * @author sliva
+ * @author juliette
  */
 package compiler.phase.lincode;
